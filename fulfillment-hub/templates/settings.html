@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Settings · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Settings</div>
+    <div class="page-subtitle">Your profile, reference data, and notifications</div>
+  </div>
+</div>
+
+<div class="two-col">
+<div>
+  <div class="panel">
+    <div class="panel-header">Notifications</div>
+    <div class="panel-header" style="border-bottom:none; padding-bottom:0;">
+      <form method="POST" action="{{ url_for('settings.mark_all_read') }}"><button class="btn btn-sm" type="submit">Mark all read</button></form>
+    </div>
+    <div class="panel-body" style="max-height:480px; overflow-y:auto;">
+      {% for n in notifications %}
+        <div class="insight-line" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span class="badge badge-{{ 'high' if n.severity=='High' else ('low' if n.severity=='Low' else 'normal') }}">{{ n.severity }}</span>
+            {{ n.message }}
+            {% if n.order_id %}<a href="{{ url_for('orders.order_detail', order_id=n.order_id) }}"> ({{ n.order_id }})</a>{% endif %}
+            <div class="muted" style="font-size:11px;">{{ n.created_at.strftime('%d %b, %H:%M') }} · {{ n.target_role }}</div>
+          </div>
+          {% if n.status == 'Unread' %}
+          <form method="POST" action="{{ url_for('settings.mark_read', notification_id=n.notification_id) }}">
+            <button class="btn btn-sm" type="submit">Mark read</button>
+          </form>
+          {% else %}<span class="muted" style="font-size:11px;">Read</span>{% endif %}
+        </div>
+      {% else %}
+        <p class="empty-state">No notifications.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="panel">
+    <div class="panel-header">Your Profile</div>
+    <div class="panel-body detail-grid">
+      <div><div class="k">Name</div><div class="v">{{ user.name }}</div></div>
+      <div><div class="k">Role</div><div class="v">{{ user.role }}</div></div>
+      <div><div class="k">Email</div><div class="v">{{ user.email }}</div></div>
+      <div><div class="k">User ID</div><div class="v">{{ user.user_id }}</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">Warehouses</div>
+    <div class="panel-body">
+      {% for w in warehouses %}
+        <div class="insight-line"><strong>{{ w.warehouse_name }}</strong> ({{ w.warehouse_type }}) — {{ w.location }}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">Couriers</div>
+    <div class="panel-body">
+      {% for c in couriers %}
+        <div class="insight-line">{{ c.courier_name }} — {{ c.service_type }}, cutoff {{ c.pickup_cutoff }}, ~{{ c.avg_delivery_days }} day(s), ₹{{ '%.0f'|format(c.cost_per_shipment) }}/shipment</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

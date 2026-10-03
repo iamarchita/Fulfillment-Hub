@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Reports · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Reports</div>
+    <div class="page-subtitle">Operational performance, calculated live from the database</div>
+  </div>
+</div>
+
+<div class="two-col">
+<div>
+  <div class="panel">
+    <div class="panel-header">Order Metrics</div>
+    <div class="panel-body">
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:0;">
+        <div class="kpi-card"><div class="kpi-value">{{ order_metrics.total }}</div><div class="kpi-label">Total Orders</div></div>
+        <div class="kpi-card ok"><div class="kpi-value">{{ order_metrics.completed }}</div><div class="kpi-label">Completed</div></div>
+        <div class="kpi-card"><div class="kpi-value">{{ order_metrics.pending }}</div><div class="kpi-label">Pending</div></div>
+        <div class="kpi-card danger"><div class="kpi-value">{{ order_metrics.delayed }}</div><div class="kpi-label">Delayed</div></div>
+        <div class="kpi-card warn"><div class="kpi-value">{{ order_metrics.priority_count }}</div><div class="kpi-label">Priority Orders</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">Fulfillment Metrics</div>
+    <div class="panel-body">
+      <p class="insight-line">Average fulfillment time (order → delivered): <strong>{{ avg_fulfillment or '-' }} hours</strong></p>
+      <div class="section-label">Orders by Current Stage</div>
+      {% for s in by_stage %}
+        <div class="insight-line">{{ s.stage }} — <strong>{{ s.c }}</strong>
+          <div class="progress-track" style="margin-top:4px;"><div class="progress-fill" style="width:{{ (s.c / order_metrics.total * 100) if order_metrics.total else 0 }}%;"></div></div>
+        </div>
+      {% endfor %}
+      <div class="section-label">Orders Stuck (Past Deadline) by Stage</div>
+      {% for s in stuck_by_stage %}
+        <div class="insight-line">{{ s.stage }} — <strong>{{ s.c }} overdue</strong></div>
+      {% else %}
+        <p class="muted">No orders currently past their deadline.</p>
+      {% endfor %}
+      <div class="section-label">Priority Deadline Performance</div>
+      <div class="insight-line">On-time delivered: <strong style="color:var(--green);">{{ priority_on_time }}</strong></div>
+      <div class="insight-line">Currently overdue: <strong style="color:var(--red);">{{ priority_overdue }}</strong></div>
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="panel">
+    <div class="panel-header">Inventory Metrics</div>
+    <div class="panel-body">
+      <div class="insight-line">Low stock products: <strong>{{ inv_low }}</strong></div>
+      <div class="insight-line">Out-of-stock products: <strong>{{ inv_out }}</strong></div>
+      <div class="insight-line">Covered by a Secondary→Main transfer: <strong>{{ inv_transfer_needed }}</strong></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">Exception Metrics</div>
+    <div class="panel-body">
+      <div class="insight-line">Open: <strong style="color:var(--red);">{{ exc_open }}</strong></div>
+      <div class="insight-line">Resolved: <strong style="color:var(--green);">{{ exc_resolved }}</strong></div>
+      <div class="section-label">By Type</div>
+      {% for t in exc_by_type %}
+        <div class="insight-line">{{ t.type }} — <strong>{{ t.c }}</strong></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">Courier Metrics</div>
+    <div class="panel-body">
+      <div class="insight-line">Scheduled pickups: <strong>{{ courier_scheduled }}</strong></div>
+      <div class="insight-line">Successful pickups: <strong style="color:var(--green);">{{ courier_success }}</strong></div>
+      <div class="insight-line">Missed pickups: <strong style="color:var(--red);">{{ courier_missed }}</strong></div>
+      <div class="insight-line">Shipments in transit: <strong>{{ shipments_transit }}</strong></div>
+      <div class="insight-line">Delivered: <strong style="color:var(--green);">{{ shipments_delivered }}</strong></div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

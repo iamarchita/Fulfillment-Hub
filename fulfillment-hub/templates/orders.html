@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Orders · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Orders</div>
+    <div class="page-subtitle">{{ total }} order{{ '' if total==1 else 's' }} found</div>
+  </div>
+</div>
+
+<form class="filter-bar" method="GET">
+  <div class="form-group">
+    <label>Search</label>
+    <input type="text" name="q" value="{{ search }}" placeholder="Order ID or customer">
+  </div>
+  <div class="form-group">
+    <label>Status</label>
+    <select name="status">
+      <option value="">All</option>
+      {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if status==s }}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Priority</label>
+    <select name="priority">
+      <option value="">All</option>
+      {% for p in ['Normal','High','Urgent'] %}<option value="{{ p }}" {{ 'selected' if priority==p }}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Warehouse</label>
+    <select name="warehouse">
+      <option value="">All</option>
+      {% for w in warehouses %}<option value="{{ w.warehouse_id }}" {{ 'selected' if warehouse==w.warehouse_id }}>{{ w.warehouse_name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Order Date</label>
+    <input type="date" name="date_from" value="{{ date_from }}">
+  </div>
+  <button class="btn btn-primary" type="submit">Apply Filters</button>
+  <a class="btn" href="{{ url_for('orders.list_orders') }}">Clear</a>
+</form>
+
+<div class="panel">
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Order ID</th><th>Customer</th><th>Order Date</th><th>Priority</th><th>Deadline</th><th>Warehouse</th><th>Status</th><th>Total</th><th></th></tr></thead>
+    <tbody>
+    {% for o in orders %}
+      <tr class="row-link" onclick="window.location='{{ url_for('orders.order_detail', order_id=o.order_id) }}'">
+        <td><strong>{{ o.order_id }}</strong></td>
+        <td>{{ o.customer_name }}</td>
+        <td>{{ o.order_date.strftime('%d %b %Y') }}</td>
+        <td><span class="badge badge-{{ o.priority|lower }}">{{ o.priority|upper }}</span></td>
+        <td>{% if o.overdue and o.order_status != 'Delivered' %}<span class="badge badge-overdue">{{ o.time_left }}</span>{% else %}{{ o.priority_deadline.strftime('%d %b, %H:%M') }}{% endif %}</td>
+        <td>{{ o.warehouse_name }}</td>
+        <td>{{ o.order_status }}</td>
+        <td>₹{{ '%.2f'|format(o.total_amount) }}</td>
+        <td><a class="btn btn-sm" href="{{ url_for('orders.order_detail', order_id=o.order_id) }}">Open</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="9" class="empty-state">No orders match these filters.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+  <span>Page {{ page }} of {{ total_pages }}</span>
+  {% if page > 1 %}<a href="{{ url_for('orders.list_orders', q=search, status=status, priority=priority, warehouse=warehouse, date_from=date_from, page=page-1) }}">Prev</a>{% endif %}
+  {% if page < total_pages %}<a href="{{ url_for('orders.list_orders', q=search, status=status, priority=priority, warehouse=warehouse, date_from=date_from, page=page+1) }}">Next</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

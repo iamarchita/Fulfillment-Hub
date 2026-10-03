@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shipping Label — {{ order.order_id }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="background:#fff;">
+<div class="label-sheet">
+  <h2>Fulfillment Hub — Shipping Label</h2>
+  <div class="detail-grid">
+    <div><div class="k">Order</div><div class="v">{{ order.order_id }}</div></div>
+    <div><div class="k">Customer</div><div class="v">{{ order.customer_name }}</div></div>
+    <div><div class="k">Deliver To</div><div class="v">{{ order.delivery_city or '-' }}</div></div>
+    <div><div class="k">Priority</div><div class="v">{{ order.priority }}</div></div>
+    <div><div class="k">Box</div><div class="v">{{ staging.box_id if staging else '-' }}</div></div>
+    <div><div class="k">Courier</div><div class="v">{{ staging.courier_name if staging and staging.courier_name else '-' }}</div></div>
+    <div><div class="k">Service</div><div class="v">{{ staging.service_type if staging and staging.service_type else '-' }}</div></div>
+    <div><div class="k">Tracking #</div><div class="v">{{ shipment.tracking_number if shipment else 'Not yet shipped' }}</div></div>
+  </div>
+  <p class="muted" style="margin-top:18px; font-size:11.5px;">Demo label — generated for internal fulfillment tracking only, not a real courier waybill.</p>
+  <button class="btn btn-primary" onclick="window.print()">Print Label</button>
+</div>
+</body>
+</html>

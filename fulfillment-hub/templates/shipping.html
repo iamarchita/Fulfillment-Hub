@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Staging &amp; Shipping · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Staging &amp; Shipping</div>
+    <div class="page-subtitle">Assign couriers, track pickups, and confirm delivery</div>
+  </div>
+</div>
+
+{% set missed = rows|selectattr('pickup_status','equalto','Missed')|list %}
+{% if missed %}
+<div class="exception-banner">
+  ⚠ MISSED PICKUP — {{ missed|length }} package(s) missed their scheduled courier pickup. Reschedule or escalate below.
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Order</th><th>Priority</th><th>Box</th><th>Location</th><th>Courier</th><th>Scheduled Pickup</th><th>Pickup Status</th><th>Shipment</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td><strong>{{ r.order_id }}</strong></td>
+        <td><span class="badge badge-{{ r.priority|lower }}">{{ r.priority|upper }}</span></td>
+        <td>{{ r.box_id or '-' }}</td>
+        <td>{{ r.staging_location or '-' }}</td>
+        <td>{{ r.courier_name or '-' }}</td>
+        <td>{{ r.scheduled_pickup.strftime('%d %b, %H:%M') if r.scheduled_pickup else '-' }}</td>
+        <td>
+          {% if r.pickup_status == 'Picked Up' %}<span class="badge badge-completed">Picked Up</span>
+          {% elif r.pickup_status == 'Missed' %}<span class="badge badge-missed">Missed</span>
+          {% else %}<span class="badge badge-waiting">Waiting</span>{% endif %}
+        </td>
+        <td>
+          {% if r.shipment_status %}
+            {% if r.shipment_status == 'Delivered' %}<span class="badge badge-delivered">Delivered</span>
+            {% elif r.shipment_status == 'In Transit' %}<span class="badge badge-in-progress">In Transit</span>
+            {% else %}<span class="badge badge-neutral">{{ r.shipment_status }}</span>{% endif %}
+            {% if r.tracking_number %}<div class="muted" style="font-size:11px;">{{ r.tracking_number }}</div>{% endif %}
+          {% else %}<span class="muted">Not shipped</span>{% endif %}
+        </td>
+        <td>
+          {% if r.order_status == 'Staging' and not r.courier_id %}
+          <form method="POST" action="{{ url_for('shipping.assign_courier', order_id=r.order_id) }}" style="display:flex; gap:4px; flex-wrap:wrap; max-width:280px;">
+            <input type="text" name="staging_location" placeholder="Location e.g. A1" required style="width:90px;">
+            <select name="courier_id" required>
+              {% for c in couriers %}<option value="{{ c.courier_id }}">{{ c.courier_name }}</option>{% endfor %}
+            </select>
+            <input type="datetime-local" name="scheduled_pickup" required>
+            <button class="btn btn-sm btn-primary" type="submit">Stage &amp; Assign</button>
+          </form>
+          {% elif r.order_status == 'Ready for Pickup' and r.pickup_status == 'Waiting' %}
+            <form method="POST" action="{{ url_for('shipping.courier_pickup', order_id=r.order_id) }}" style="display:inline;">
+              <input type="hidden" name="action" value="picked_up">
+              <button class="btn btn-sm btn-primary" type="submit">Picked Up</button>
+            </form>
+            <form method="POST" action="{{ url_for('shipping.courier_pickup', order_id=r.order_id) }}" style="display:inline;">
+              <input type="hidden" name="action" value="missed">
+              <button class="btn btn-sm btn-danger" type="submit">Missed</button>
+            </form>
+          {% elif r.order_status == 'Shipped' %}
+            <form method="POST" action="{{ url_for('shipping.mark_delivered', order_id=r.order_id) }}" style="display:inline;">
+              <button class="btn btn-sm btn-primary" type="submit">Mark Delivered</button>
+            </form>
+          {% endif %}
+          <a class="btn btn-sm" href="{{ url_for('shipping.shipping_label', order_id=r.order_id) }}" target="_blank">Label</a>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="9" class="empty-state">Nothing currently in staging or shipping.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

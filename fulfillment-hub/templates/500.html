@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Something went wrong · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="panel"><div class="empty-state">
+  <h2>Something went wrong</h2>
+  <p>We hit an unexpected error processing that request. Please try again, and contact the operations admin if it continues.</p>
+  <a class="btn btn-primary" href="{{ url_for('dashboard.index') }}">Back to Dashboard</a>
+</div></div>
+{% endblock %}
+{% block auth_content %}
+<div class="login-shell">
+  <div class="login-card">
+    <div class="login-brand-title">Fulfillment Hub</div>
+    <div class="login-brand-sub">Something went wrong. Please try again.</div>
+    <a class="btn btn-primary btn-block" href="{{ url_for('auth.login') }}">Back to Login</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Pick {{ order.order_id }} · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ order.order_id }} <span class="badge badge-{{ order.priority|lower }}">{{ order.priority|upper }}</span></div>
+    <div class="page-subtitle">{{ order.customer_name }} · {{ order.warehouse_name }}</div>
+  </div>
+  <a class="btn" href="{{ url_for('picking.queue') }}">← Back to Queue</a>
+</div>
+
+<div class="panel">
+  <div class="panel-header">Items to Pick</div>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Product</th><th>Variant</th><th>Quantity</th></tr></thead>
+    <tbody>
+    {% for it in items %}
+      <tr><td>{{ it.product_name }}</td><td>{{ it.variant }}</td><td>{{ it.quantity }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">Verify Before Completing</div>
+  <div class="panel-body">
+    <form method="POST" action="{{ url_for('picking.complete_picking', order_id=order.order_id) }}">
+      <div class="checkbox-row"><input type="checkbox" name="product_ok" id="p1"><label for="p1">Product Verified — correct item(s) picked</label></div>
+      <div class="checkbox-row"><input type="checkbox" name="variant_ok" id="p2"><label for="p2">Variant Verified — correct variant matches order</label></div>
+      <div class="checkbox-row"><input type="checkbox" name="qty_ok" id="p3"><label for="p3">Quantity Verified — correct quantity picked</label></div>
+
+      <div class="form-group" style="max-width:320px; margin-top:12px;">
+        <label>If verification fails, select the issue</label>
+        <select name="issue_type">
+          <option value="Wrong Product/Variant">Wrong Product/Variant</option>
+          <option value="Missing Stock">Missing Stock</option>
+          <option value="Damaged Item">Damaged Item</option>
+        </select>
+      </div>
+
+      <p class="muted" style="font-size:12.5px; margin-top:10px;">
+        If all three checks are confirmed, picking is marked Completed and the order moves to Packing.
+        If any check fails, an exception is created automatically instead of letting the order continue silently.
+      </p>
+
+      <button type="submit" class="btn btn-primary" style="margin-top:8px;">Submit Verification</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

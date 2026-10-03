@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Picking · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Picking Queue</div>
+    <div class="page-subtitle">What do I pick next? Ordered by priority and deadline.</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Order</th><th>Priority</th><th>Customer</th><th>Warehouse</th><th>Deadline</th><th>Time Left</th><th>Pick Status</th><th></th></tr></thead>
+    <tbody>
+    {% for o in orders %}
+      <tr>
+        <td><strong>{{ o.order_id }}</strong></td>
+        <td><span class="badge badge-{{ o.priority|lower }}">{{ o.priority|upper }}</span></td>
+        <td>{{ o.customer_name }}</td>
+        <td>{{ o.warehouse_name }}</td>
+        <td>{{ o.priority_deadline.strftime('%d %b, %H:%M') if o.priority_deadline else '-' }}</td>
+        <td>{% if o.overdue %}<span class="badge badge-overdue">{{ o.time_left }}</span>{% else %}{{ o.time_left }}{% endif %}</td>
+        <td>
+          {% if o.pick_status == 'Blocked' %}<span class="badge badge-blocked">Blocked</span>
+          {% elif o.pick_status == 'In Progress' %}<span class="badge badge-in-progress">In Progress</span>
+          {% else %}<span class="badge badge-pending">Not Started</span>{% endif %}
+        </td>
+        <td><a class="btn btn-sm btn-primary" href="{{ url_for('picking.picking_detail', order_id=o.order_id) }}">Pick</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8" class="empty-state">Nothing in the picking queue right now.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

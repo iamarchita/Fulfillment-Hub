@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Dashboard</div>
+    <div class="page-subtitle">What needs attention right now</div>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card"><div class="kpi-value">{{ kpis.total_orders }}</div><div class="kpi-label">Total Orders</div></div>
+  <div class="kpi-card"><div class="kpi-value">{{ kpis.pending_orders }}</div><div class="kpi-label">Pending Orders</div></div>
+  <div class="kpi-card warn"><div class="kpi-value">{{ kpis.priority_orders }}</div><div class="kpi-label">Priority Orders</div></div>
+  <div class="kpi-card danger"><div class="kpi-value">{{ kpis.delayed_orders }}</div><div class="kpi-label">Delayed Orders</div></div>
+  <div class="kpi-card"><div class="kpi-value">{{ kpis.ready_pickup }}</div><div class="kpi-label">Ready for Pickup</div></div>
+  <div class="kpi-card danger"><div class="kpi-value">{{ kpis.open_exceptions }}</div><div class="kpi-label">Open Exceptions</div></div>
+  <div class="kpi-card warn"><div class="kpi-value">{{ kpis.low_stock }}</div><div class="kpi-label">Low Stock Items</div></div>
+  <div class="kpi-card danger"><div class="kpi-value">{{ kpis.out_stock }}</div><div class="kpi-label">Out-of-Stock Items</div></div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">Attention Required</div>
+  <div class="panel-body">
+    <div class="alerts-grid">
+      <div class="alert-box {{ 'severity-high' if approaching else 'severity-ok' }}">
+        <div class="alert-title">Priority Deadline Approaching</div>
+        {{ approaching }} priority order{{ '' if approaching == 1 else 's' }} need attention within the next 6 hours.
+      </div>
+      <div class="alert-box {{ 'severity-high' if kpis.out_stock else ('severity-medium' if kpis.low_stock else 'severity-ok') }}">
+        <div class="alert-title">Inventory Risk</div>
+        {{ kpis.low_stock }} products below reorder level, {{ kpis.out_stock }} out of stock at Main Warehouse.
+        {% if transfer_covered %}{{ transfer_covered }} of these can be covered by a transfer from Secondary.{% endif %}
+      </div>
+      <div class="alert-box {{ 'severity-high' if delayed_by_stage else 'severity-ok' }}">
+        <div class="alert-title">Delayed Orders</div>
+        {% if delayed_by_stage %}
+          {% for d in delayed_by_stage %}{{ d.c }} order{{ '' if d.c==1 else 's' }} stuck in {{ d.order_status }}. {% endfor %}
+        {% else %}No orders are currently past their deadline.{% endif %}
+      </div>
+      <div class="alert-box {{ 'severity-high' if missed_pickups else 'severity-ok' }}">
+        <div class="alert-title">Courier Risk</div>
+        {{ missed_pickups }} package{{ '' if missed_pickups==1 else 's' }} missed scheduled pickup.
+      </div>
+      <div class="alert-box {{ 'severity-high' if open_exceptions else 'severity-ok' }}">
+        <div class="alert-title">Open Exceptions</div>
+        {{ open_exceptions }} operational exception{{ '' if open_exceptions==1 else 's' }} require attention.
+        <a href="{{ url_for('exceptions.list_exceptions') }}">Review exceptions →</a>
+      </div>
+      <div class="alert-box {{ 'severity-medium' if kpis.priority_orders else 'severity-ok' }}">
+        <div class="alert-title">Priority Load</div>
+        {{ kpis.priority_orders }} High/Urgent orders currently in the pipeline.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">Priority Orders Requiring Attention</div>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Order</th><th>Priority</th><th>Customer</th><th>Stage</th><th>Deadline</th><th>Time Remaining</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for o in priority_orders %}
+      <tr class="row-link" onclick="window.location='{{ url_for('orders.order_detail', order_id=o.order_id) }}'">
+        <td><strong>{{ o.order_id }}</strong></td>
+        <td><span class="badge badge-{{ o.priority|lower }}">{{ o.priority|upper }}</span></td>
+        <td>{{ o.customer_name }}</td>
+        <td>{{ o.order_status }}</td>
+        <td>{{ o.priority_deadline.strftime('%d %b, %H:%M') }}</td>
+        <td>{% if o.overdue %}<span class="badge badge-overdue">{{ o.time_left }}</span>{% else %}{{ o.time_left }}{% endif %}</td>
+        <td>{{ o.order_status }}</td>
+        <td><a class="btn btn-sm" href="{{ url_for('orders.order_detail', order_id=o.order_id) }}">Open</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8" class="empty-state">No priority orders pending right now.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">Fulfillment Pipeline</div>
+  <div class="panel-body">
+    <div class="pipeline-strip">
+      {% for p in pipeline_counts %}
+        <div class="pipeline-step">
+          <div class="pipeline-dot">{{ p.count }}</div>
+          <div class="pipeline-label">{{ p.stage }}</div>
+        </div>
+        {% if not loop.last %}<div class="pipeline-line"></div>{% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

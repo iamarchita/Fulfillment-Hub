@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{{ order.order_id }} · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ order.order_id }} <span class="badge badge-{{ order.priority|lower }}">{{ order.priority|upper }}</span></div>
+    <div class="page-subtitle">{{ order.customer_name }} · {{ order.delivery_city or '-' }}</div>
+  </div>
+  <a class="btn" href="{{ url_for('orders.list_orders') }}">← Back to Orders</a>
+</div>
+
+{% if exception %}
+<div class="exception-banner">
+  ⚠ Exception on this order: <strong>{{ exception.exception_type }}</strong> — {{ exception.description }}
+  ({{ exception.status }}{% if exception.assigned_to %}, assigned {{ exception.assigned_to }}{% endif %})
+  <a href="{{ url_for('exceptions.list_exceptions') }}">Manage in Exceptions →</a>
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-header">Fulfillment Timeline</div>
+  <div class="panel-body">
+    <div class="pipeline-strip">
+      {% for stage in pipeline %}
+        {% set idx = loop.index0 %}
+        <div class="pipeline-step {{ 'done' if idx < current_idx else ('current' if idx == current_idx else '') }}">
+          <div class="pipeline-dot">{{ '✓' if idx < current_idx else idx+1 }}</div>
+          <div class="pipeline-label">{{ stage }}</div>
+        </div>
+        {% if not loop.last %}<div class="pipeline-line {{ 'done' if idx < current_idx else '' }}"></div>{% endif %}
+      {% endfor %}
+    </div>
+    {% if order.order_status not in pipeline %}
+      <p class="muted" style="margin-top:10px;">Current status: <strong>{{ order.order_status }}</strong></p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="two-col">
+  <div>
+    <div class="panel">
+      <div class="panel-header">Order Information</div>
+      <div class="panel-body detail-grid">
+        <div><div class="k">Order ID</div><div class="v">{{ order.order_id }}</div></div>
+        <div><div class="k">Customer</div><div class="v">{{ order.customer_name }}</div></div>
+        <div><div class="k">Order Date</div><div class="v">{{ order.order_date.strftime('%d %b %Y, %H:%M') }}</div></div>
+        <div><div class="k">Priority</div><div class="v"><span class="badge badge-{{ order.priority|lower }}">{{ order.priority|upper }}</span></div></div>
+        <div><div class="k">Priority Deadline</div><div class="v">{{ order.priority_deadline.strftime('%d %b, %H:%M') }} — {% if overdue %}<span class="badge badge-overdue">{{ time_left }}</span>{% else %}{{ time_left }} left{% endif %}</div></div>
+        <div><div class="k">Warehouse</div><div class="v">{{ order.warehouse_name }}</div></div>
+        <div><div class="k">Payment Status</div><div class="v">{{ order.payment_status }}</div></div>
+        <div><div class="k">Delivery City</div><div class="v">{{ order.delivery_city or '-' }}</div></div>
+        <div><div class="k">Total Amount</div><div class="v">₹{{ '%.2f'|format(order.total_amount) }}</div></div>
+        <div><div class="k">Current Status</div><div class="v">{{ order.order_status }}</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Items</div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Product</th><th>Variant</th><th>Qty</th><th>Unit Price</th><th>Line Total</th><th>Variant Verified</th></tr></thead>
+        <tbody>
+        {% for it in items %}
+          <tr>
+            <td>{{ it.product_name }}</td>
+            <td>{{ it.variant }}</td>
+            <td>{{ it.quantity }}</td>
+            <td>₹{{ '%.2f'|format(it.unit_price) }}</td>
+            <td>₹{{ '%.2f'|format(it.line_total) }}</td>
+            <td><span class="badge {{ 'badge-verified' if it.variant_verified=='Yes' else 'badge-open' }}">{{ it.variant_verified }}</span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <div class="panel-header">Stage Details</div>
+      <div class="panel-body">
+        {% if picking %}<p><strong>Picking:</strong> {{ picking.status }} {% if picking.verification_result %}({{ picking.verification_result }}){% endif %}</p>{% endif %}
+        {% if packing %}<p><strong>Packing:</strong> {{ packing.status }}{% if packing.box_id %}, Box {{ packing.box_id }}{% endif %}</p>{% endif %}
+        {% if staging %}<p><strong>Staging:</strong> {{ staging.status }}{% if staging.staging_location %} at {{ staging.staging_location }}{% endif %}{% if staging.courier_name %}, courier {{ staging.courier_name }}{% endif %}, pickup {{ staging.pickup_status }}</p>{% endif %}
+        {% if shipment %}<p><strong>Shipment:</strong> {{ shipment.shipment_status }}{% if shipment.tracking_number %}, tracking {{ shipment.tracking_number }}{% endif %}</p>{% endif %}
+        {% if not (picking or packing or staging or shipment) %}<p class="muted">No fulfillment activity recorded yet.</p>{% endif %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Status History</div>
+      <div class="panel-body" style="max-height:340px; overflow-y:auto;">
+        {% for h in history|reverse %}
+          <div class="insight-line"><strong>{{ h.status }}</strong><br><span class="muted">{{ h.changed_at.strftime('%d %b, %H:%M') }} · {{ h.notes }}</span></div>
+        {% else %}
+          <p class="muted">No history recorded.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

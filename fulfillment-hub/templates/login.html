@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Login · Fulfillment Hub{% endblock %}
+{% block auth_content %}
+<div class="login-shell">
+  <div class="login-card">
+    <div class="login-brand-title">Fulfillment Hub</div>
+    <div class="login-brand-sub">Operations Control Center — XYZ</div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="office@xyz-ops.com" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+    </form>
+
+    <div class="login-hint">
+      Demo accounts (password for all: <strong>Demo@123</strong>)<br>
+      admin@xyz-ops.com — Admin · office@xyz-ops.com — Office<br>
+      warehouse@xyz-ops.com — Warehouse · analyst@xyz-ops.com — Analyst
+    </div>
+  </div>
+</div>
+{% endblock %}

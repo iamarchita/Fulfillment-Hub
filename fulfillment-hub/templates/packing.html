@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Packing · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Packing</div>
+    <div class="page-subtitle">Orders that have completed picking and are ready to pack</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Order</th><th>Priority</th><th>Customer</th><th>Items</th><th>Box ID</th><th>Label</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td><strong>{{ r.order_id }}</strong></td>
+        <td><span class="badge badge-{{ r.priority|lower }}">{{ r.priority|upper }}</span></td>
+        <td>{{ r.customer_name }}</td>
+        <td>{{ r.item_count }} unit(s)</td>
+        <td>{{ r.box_id or '-' }}</td>
+        <td><span class="badge {{ 'badge-completed' if r.label_status=='Printed' else 'badge-pending' }}">{{ r.label_status or 'Pending' }}</span></td>
+        <td><span class="badge {{ 'badge-completed' if r.status=='Packed' else 'badge-pending' }}">{{ r.status }}</span></td>
+        <td>
+          {% if r.status != 'Packed' %}
+          <form method="POST" action="{{ url_for('packing.mark_packed', order_id=r.order_id) }}" style="display:flex; gap:4px;">
+            <select name="package_type">
+              {% for pt in package_types %}<option value="{{ pt }}">{{ pt }}</option>{% endfor %}
+            </select>
+            <button class="btn btn-sm btn-primary" type="submit">Mark Packed</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8" class="empty-state">No orders are waiting to be packed.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

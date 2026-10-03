@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Exceptions · Fulfillment Hub{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Exceptions</div>
+    <div class="page-subtitle">{{ open_count }} open · {{ in_progress_count }} in progress</div>
+  </div>
+</div>
+
+<form class="filter-bar" method="GET">
+  <div class="form-group">
+    <label>Status</label>
+    <select name="status" onchange="this.form.submit()">
+      <option value="">All</option>
+      {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if status==s }}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Type</label>
+    <select name="type" onchange="this.form.submit()">
+      <option value="">All</option>
+      {% for t in types %}<option value="{{ t }}" {{ 'selected' if exc_type==t }}>{{ t }}</option>{% endfor %}
+    </select>
+  </div>
+</form>
+
+<div class="panel">
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>ID</th><th>Order</th><th>Type</th><th>Description</th><th>Reported</th><th>Assigned</th><th>Priority</th><th>Status</th><th>Resolution / Update</th></tr></thead>
+    <tbody>
+    {% for e in rows %}
+      <tr>
+        <td><strong>{{ e.exception_id }}</strong></td>
+        <td><a href="{{ url_for('orders.order_detail', order_id=e.order_id) }}">{{ e.order_id }}</a></td>
+        <td>{{ e.exception_type }}</td>
+        <td style="max-width:220px;">{{ e.description }}</td>
+        <td>{{ e.reported_at.strftime('%d %b, %H:%M') }}</td>
+        <td>{{ e.assigned_to_name or '-' }}</td>
+        <td><span class="badge badge-{{ 'high' if e.priority in ('High','Critical') else 'normal' }}">{{ e.priority }}</span></td>
+        <td>
+          {% if e.status == 'Open' %}<span class="badge badge-open">Open</span>
+          {% elif e.status == 'In Progress' %}<span class="badge badge-in-progress">In Progress</span>
+          {% else %}<span class="badge badge-resolved">Resolved</span>{% endif %}
+          {% if e.resolution %}<div class="muted" style="font-size:11px; margin-top:3px;">{{ e.resolution }}</div>{% endif %}
+        </td>
+        <td>
+          {% if e.status != 'Resolved' %}
+          <form method="POST" action="{{ url_for('exceptions.update_exception', exception_id=e.exception_id) }}" style="display:flex; flex-direction:column; gap:4px; min-width:220px;">
+            <select name="assigned_to">
+              {% for u in users %}<option value="{{ u.user_id }}" {{ 'selected' if u.user_id==e.assigned_to }}>{{ u.name }} ({{ u.role }})</option>{% endfor %}
+            </select>
+            <select name="status">
+              {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if s==e.status }}>{{ s }}</option>{% endfor %}
+            </select>
+            <input type="text" name="resolution" placeholder="Resolution note">
+            <button class="btn btn-sm btn-primary" type="submit">Update</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="9" class="empty-state">No exceptions match these filters.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

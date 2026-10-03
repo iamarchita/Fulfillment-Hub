@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Fulfillment Hub{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+{% if session.get('user_id') %}
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-title">Fulfillment Hub</div>
+      <div class="brand-sub">Operations Control Center</div>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if request.endpoint=='dashboard.index' }}">Dashboard</a>
+      <a href="{{ url_for('orders.list_orders') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('orders.') }}">Orders</a>
+      <a href="{{ url_for('inventory.list_inventory') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('inventory.') }}">Inventory</a>
+      <a href="{{ url_for('transfers.list_transfers') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('transfers.') }}">Transfers</a>
+      <a href="{{ url_for('picking.queue') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('picking.') }}">Picking</a>
+      <a href="{{ url_for('packing.list_packing') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('packing.') }}">Packing</a>
+      <a href="{{ url_for('shipping.list_staging') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('shipping.') }}">Staging &amp; Shipping</a>
+      <a href="{{ url_for('exceptions.list_exceptions') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('exceptions.') }}">Exceptions{% if open_exceptions_nav %} <span class="nav-badge">{{ open_exceptions_nav }}</span>{% endif %}</a>
+      <a href="{{ url_for('reports.index') }}" class="{{ 'active' if request.endpoint=='reports.index' }}">Reports</a>
+      <a href="{{ url_for('settings.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('settings.') }}">Settings</a>
+    </nav>
+  </aside>
+
+  <div class="main-col">
+    <header class="topbar">
+      <div class="topbar-left"></div>
+      <div class="topbar-right">
+        <div class="bell-wrap">
+          <button class="bell-btn" onclick="document.getElementById('notif-dropdown').classList.toggle('open')">
+            🔔 {% if nav_unread_count %}<span class="bell-count">{{ nav_unread_count }}</span>{% endif %}
+          </button>
+          <div id="notif-dropdown" class="notif-dropdown">
+            <div class="notif-dropdown-title">Recent Alerts</div>
+            {% if nav_notifications %}
+              {% for n in nav_notifications %}
+              <div class="notif-item sev-{{ n.severity|lower }}">
+                <div class="notif-msg">{{ n.message }}</div>
+                <div class="notif-meta">{{ n.created_at }}</div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="notif-empty">No unread alerts.</div>
+            {% endif %}
+            <a class="notif-viewall" href="{{ url_for('settings.index') }}">View all</a>
+          </div>
+        </div>
+        <div class="user-chip">
+          <span class="user-name">{{ session.get('name') }}</span>
+          <span class="user-role">{{ session.get('role') }}</span>
+        </div>
+        <a class="logout-link" href="{{ url_for('auth.logout') }}">Logout</a>
+      </div>
+    </header>
+
+    <main class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-stack">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% else %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
