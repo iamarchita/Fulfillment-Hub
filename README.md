@@ -32,7 +32,7 @@ Fulfillment Hub is an internal operations management application designed to hel
 ### 1. Clone the Repository
 
 ```bash
-git clone ---  https://github.com/iamarchita/Fulfillment-Hub
+git clone  https://github.com/iamarchita/Fulfillment-Hub
 cd fulfillment-hub
 If the repository contains a nested fulfillment-hub folder, enter that folder:
 
